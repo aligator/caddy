@@ -197,8 +197,7 @@ func cmdStop() (int, error) {
 	thisProcName := filepath.Base(os.Args[0])
 	var found bool
 	for _, p := range processList {
-		// the process we're looking for should have the same name but different PID
-		fmt.Printf("%s (=) %s %d (=) %d \n", p.Executable(), thisProcName  + ".exe", p.Pid(), os.Getpid());
+		// the process we're looking for should have the same name but different PID		
 		if p.Executable() == thisProcName  + ".exe" && p.Pid() != os.Getpid() {
 			found = true
 			fmt.Printf("pid=%d\n", p.Pid())
