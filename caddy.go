@@ -149,9 +149,45 @@ func Run(newCfg *Config) error {
 	oldCfg := currentCfg
 	currentCfg = newCfg
 
-	stopServerConfig(oldCfg)
+	// Stop, Cleanup each old app
+	unsyncedStop(oldCfg)
 
 	return nil
+}
+
+// Stop stops running the current configuration.
+// It is the antithesis of Run(). This function
+// will log any errors that occur during the
+// stopping of individual apps and continue to
+// stop the others.
+func Stop() error {
+	currentCfgMu.Lock()
+	defer currentCfgMu.Unlock()
+	unsyncedStop(currentCfg)
+	currentCfg = nil
+	return nil
+}
+
+// unsyncedStop stops oldCfg from running, but if
+// applicable, you need to acquire locks yourself.
+// It is a no-op if oldCfg is nil. If any app
+// returns an error when stopping, it is logged
+// and the function continues with the next app.
+func unsyncedStop(oldCfg *Config) {
+	if oldCfg == nil {
+		return
+	}
+
+	// stop each app
+	for name, a := range oldCfg.apps {
+		err := a.Stop()
+		if err != nil {
+			log.Printf("[ERROR] stop %s: %v", name, err)
+		}
+	}
+
+	// clean up all old modules
+	oldCfg.cancelFunc()
 }
 
 // Duration is a JSON-string-unmarshable duration type.
@@ -167,48 +203,28 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func StopCurrent(){
-	stopServerConfig(currentCfg)
-}
-
-func stopServerConfig(oldCfg *Config){
-	
-	// Stop, Cleanup each old app
-	if oldCfg != nil {
-		for name, a := range oldCfg.apps {
-			err := a.Stop()
-			if err != nil {
-				log.Printf("[ERROR] stop %s: %v", name, err)
-			}
-		}
-
-		// clean up all old modules
-		oldCfg.cancelFunc()
-	}
-}
-
 // GoModule returns the build info of this Caddy
 // build from debug.BuildInfo (requires Go modules).
 // If no version information is available, a non-nil
 // value will still be returned, but with an
 // unknown version.
 func GoModule() *debug.Module {
+	mod := &debug.Module{Version: "unknown"}
 	bi, ok := debug.ReadBuildInfo()
 	if ok {
+		mod.Path = bi.Main.Path
 		// The recommended way to build Caddy involves
 		// creating a separate main module, which
 		// TODO: track related Go issue: https://github.com/golang/go/issues/29228
-		for _, mod := range bi.Deps {
-			if mod.Path == goModule {
-				return mod
+		// once that issue is fixed, we should just be able to use bi.Main... hopefully.
+		for _, dep := range bi.Deps {
+			if dep.Path == mod.Path {
+				return dep
 			}
 		}
 	}
-	return &debug.Module{Version: "unknown"}
+	return mod
 }
-
-// goModule is the name of this Go module.
-const goModule = "github.com/caddyserver/caddy/v2"
 
 // CtxKey is a value type for use with context.WithValue.
 type CtxKey string

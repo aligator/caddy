@@ -12,16 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package reverseproxy
+// +build windows plan9 nacl js
 
-import (
-	"github.com/caddyserver/caddy/v2"
-)
+package caddy
 
-// Register caddy module.
-func init() {
-	caddy.RegisterModule(caddy.Module{
-		Name: "http.handlers.reverse_proxy",
-		New:  func() interface{} { return new(LoadBalanced) },
-	})
-}
+func trapSignalsPosix() {}

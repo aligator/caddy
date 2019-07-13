@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/caddyserver/caddy/v2"
@@ -28,8 +29,8 @@ func TestStaticResponseHandler(t *testing.T) {
 	r := fakeRequest()
 	w := httptest.NewRecorder()
 
-	s := Static{
-		StatusCode: http.StatusNotFound,
+	s := StaticResponse{
+		StatusCode: weakString(strconv.Itoa(http.StatusNotFound)),
 		Headers: http.Header{
 			"X-Test": []string{"Testing"},
 		},
@@ -37,7 +38,7 @@ func TestStaticResponseHandler(t *testing.T) {
 		Close: true,
 	}
 
-	err := s.ServeHTTP(w, r)
+	err := s.ServeHTTP(w, r, nil)
 	if err != nil {
 		t.Errorf("did not expect an error, but got: %v", err)
 	}
