@@ -33,7 +33,7 @@ func tryStopProcess(pid int, force bool) error {
     if err := cmd.Run(); err != nil {
         // if taskkill fails try again to force.
         if err.Error() == "exit status 1" && !force {
-            trygracefullyStopProcess(pid, true)
+            tryStopProcess(pid, true)
         } else {
             return fmt.Errorf("taskkill: %v", err)
         }
