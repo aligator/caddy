@@ -171,7 +171,7 @@ func handleLoadConfig(w http.ResponseWriter, r *http.Request) {
 
 
 func handleShutdownKill(w http.ResponseWriter, r *http.Request) {
-	StopCurrent()
+	Stop()
 }
 
 // Load loads and starts a configuration.
