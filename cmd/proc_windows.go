@@ -15,15 +15,28 @@
 package caddycmd
 
 import (
-	"fmt"
-	"os/exec"
-	"strconv"
+    "fmt"
+    "os/exec"
+    "strconv"
 )
 
 func gracefullyStopProcess(pid int) error {
-	cmd := exec.Command("taskkill", "/pid", strconv.Itoa(pid))
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("taskkill: %v", err)
-	}
-	return nil
+    return tryStopProcess(pid, false)
+}
+
+func tryStopProcess(pid int, force bool) error {
+    extraparam := ""
+    if force {
+        extraparam = "/f"
+    }
+    cmd := exec.Command("taskkill", "/pid", strconv.Itoa(pid), extraparam)
+    if err := cmd.Run(); err != nil {
+        // if taskkill fails try again to force.
+        if err.Error() == "exit status 1" && !force {
+            trygracefullyStopProcess(pid, true)
+        } else {
+            return fmt.Errorf("taskkill: %v", err)
+        }
+    }
+    return nil
 }

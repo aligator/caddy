@@ -84,6 +84,8 @@ func StartAdmin(initialConfigJSON []byte) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/load", handleLoadConfig)
 
+	mux.HandleFunc("/shutdownkill", handleShutdownKill)
+
 	///// BEGIN PPROF STUFF (TODO: Temporary) /////
 	mux.HandleFunc("/debug/pprof/", pprof.Index)
 	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
@@ -165,6 +167,11 @@ func handleLoadConfig(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+}
+
+
+func handleShutdownKill(w http.ResponseWriter, r *http.Request) {
+	StopCurrent()
 }
 
 // Load loads and starts a configuration.

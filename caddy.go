@@ -149,18 +149,7 @@ func Run(newCfg *Config) error {
 	oldCfg := currentCfg
 	currentCfg = newCfg
 
-	// Stop, Cleanup each old app
-	if oldCfg != nil {
-		for name, a := range oldCfg.apps {
-			err := a.Stop()
-			if err != nil {
-				log.Printf("[ERROR] stop %s: %v", name, err)
-			}
-		}
-
-		// clean up all old modules
-		oldCfg.cancelFunc()
-	}
+	stopServerConfig(oldCfg)
 
 	return nil
 }
@@ -176,6 +165,26 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	}
 	*d = Duration(dd)
 	return nil
+}
+
+func StopCurrent(){
+	stopServerConfig(currentCfg)
+}
+
+func stopServerConfig(oldCfg *Config){
+	
+	// Stop, Cleanup each old app
+	if oldCfg != nil {
+		for name, a := range oldCfg.apps {
+			err := a.Stop()
+			if err != nil {
+				log.Printf("[ERROR] stop %s: %v", name, err)
+			}
+		}
+
+		// clean up all old modules
+		oldCfg.cancelFunc()
+	}
 }
 
 // GoModule returns the build info of this Caddy
